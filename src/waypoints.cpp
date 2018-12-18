@@ -57,6 +57,12 @@ int main( int argc, char **argv )
 
   geometry_msgs::PointStamped point;
 
+  // Waypoint Nr. 0
+  point.point.x = 5.0;
+  point.point.y = 5.0;
+  point.point.z = -45.0;
+  waypoints.push_back(point);
+  
   // Waypoint Nr. 1
   point.point.x = 2.0;
   point.point.y = -3.0;
@@ -96,8 +102,8 @@ int main( int argc, char **argv )
   for( int j=0; j<waypoints.size(); j++ )
   {
     move_base_msgs::MoveBaseGoal goal;
-    // send one goal to the robot
-    goal.target_pose.header.frame_id = "robot_footprint"; // or use "base_link"
+    // use "robot_footprint" to send a goal relative to the robot actual pose and "map" to send an absolute goal
+    goal.target_pose.header.frame_id = "map"; // or use "base_link"
     goal.target_pose.header.stamp= ros::Time::now();
     goal.target_pose.pose.position.x= waypoints[j].point.x;
     goal.target_pose.pose.position.y= waypoints[j].point.y;
