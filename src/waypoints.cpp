@@ -2,6 +2,12 @@
 #include <ros/ros.h>
 // ros package to access package directory
 #include <ros/package.h>
+// move base
+#include <move_base_msgs/MoveBaseAction.h>
+// simple move action
+#include <actionlib/client/simple_action_client.h>
+// stamped point message
+#include <geometry_msgs/PointStamped.h>
 
 /*
  * main function
@@ -20,6 +26,29 @@ int main( int argc, char **argv )
    * part of the ROS system.
    */
   ros::init( argc, argv, "navi_goals_node" );
+  
+  /**
+   * NodeHandle is the main access point to communications with the ROS system.
+   * The first NodeHandle constructed will fully initialize this node, and the last
+   * NodeHandle destructed will close down the node.
+   */
+  ros::NodeHandle n;
+  
+  /// array of waypoint
+  std::vector<geometry_msgs::PointStamped> waypoints;
+                  
+  // create a convenience typedef for a SimpleActionClient that will allow us to communicate with actions that adhere to the MoveBaseAction action interface
+  typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
+                  
+  // tell the action client that we want to spin a thread by default
+  MoveBaseClient action_client( "move_base", true );
+  
+  // wait for the action server to come up
+  while( !action_client.waitForServer( ros::Duration(5.0) ) )
+    {
+      ROS_INFO("Waiting for the move_base action server to come up");
+    }
+    
 
   // spin ROS
   try
