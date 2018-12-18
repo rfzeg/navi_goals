@@ -200,3 +200,6 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(waypoints src/waypoints.cpp)
+target_link_libraries(waypoints ${catkin_LIBRARIES})
