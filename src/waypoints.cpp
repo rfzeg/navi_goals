@@ -8,6 +8,10 @@
 #include <actionlib/client/simple_action_client.h>
 // stamped point message
 #include <geometry_msgs/PointStamped.h>
+// tf2 matrix
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Transform.h>
 
 /*
  * main function
@@ -49,6 +53,74 @@ int main( int argc, char **argv )
       ROS_INFO("Waiting for the move_base action server to come up");
     }
     
+  // define each waypoint's coordinates (double)
+
+  geometry_msgs::PointStamped point;
+
+  // Waypoint Nr. 1
+  point.point.x = 2.0;
+  point.point.y = -3.0;
+  point.point.z = -135.0;
+  waypoints.push_back(point);
+  
+  // Waypoint Nr. 2
+  point.point.x = 8.0;
+  point.point.y = -2.0;
+  point.point.z = 90.0;
+  waypoints.push_back(point);
+  
+  // Waypoint Nr. 3
+  point.point.x = 8.0;
+  point.point.y = 5.0;
+  point.point.z = 90.0;
+  waypoints.push_back(point);
+  
+  // Waypoint Nr. 4
+  point.point.x = -6.0;
+  point.point.y = 6.0;
+  point.point.z = -135.0;
+  waypoints.push_back(point);
+  
+  // Waypoint Nr. 5
+  point.point.x = -6.0;
+  point.point.y = -1.5;
+  point.point.z = 0.0;
+  waypoints.push_back(point);
+  
+  // Waypoint Nr. 6
+  point.point.x = 0.0;
+  point.point.y = 0.0;
+  point.point.z = 45.0;
+  waypoints.push_back(point);
+
+  for( int j=0; j<waypoints.size(); j++ )
+  {
+    move_base_msgs::MoveBaseGoal goal;
+    // send one goal to the robot
+    goal.target_pose.header.frame_id = "robot_footprint"; // or use "base_link"
+    goal.target_pose.header.stamp= ros::Time::now();
+    goal.target_pose.pose.position.x= waypoints[j].point.x;
+    goal.target_pose.pose.position.y= waypoints[j].point.y;
+    goal.target_pose.pose.position.z= 0.0;
+
+    // convert the degrees to quaternion
+    double yaw= waypoints[j].point.z*M_PI/180.;
+    tf2::Quaternion q;
+    q.setRPY( 0., 0., yaw );
+    goal.target_pose.pose.orientation.x= q.x();
+    goal.target_pose.pose.orientation.y= q.y();
+    goal.target_pose.pose.orientation.z= q.z();
+    goal.target_pose.pose.orientation.w= q.w();
+
+    ROS_INFO("Sending goal: (%.2f, %.2f, %.2f)", goal.target_pose.pose.position.x, goal.target_pose.pose.position.y, goal.target_pose.pose.orientation.z );
+    action_client.sendGoal( goal );
+    action_client.waitForResult();
+    if(action_client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+      ROS_INFO("Hooray, the base move to (%.2f, %.2f, %.2f)", goal.target_pose.pose.position.x, goal.target_pose.pose.position.y, goal.target_pose.pose.orientation.z );
+    else
+      ROS_INFO("The base failed to move to (%.2f, %.2f, %.2f) for some reason", goal.target_pose.pose.position.x, goal.target_pose.pose.position.y, goal.target_pose.pose.orientation.z );
+    ros::Duration(0.5).sleep();
+  }
 
   // spin ROS
   try
