@@ -29,16 +29,16 @@ int main( int argc, char **argv )
    * You must call one of the versions of ros::init() before using any other
    * part of the ROS system.
    */
-  ros::init( argc, argv, "navi_goals_node" );
+  ros::init( argc, argv, "navi_goals_node" );  // initialize roscpp node
   
   /**
    * NodeHandle is the main access point to communications with the ROS system.
    * The first NodeHandle constructed will fully initialize this node, and the last
    * NodeHandle destructed will close down the node.
    */
-  ros::NodeHandle n;
+  ros::NodeHandle n; // start the roscpp node by creating a ros handle
   
-  /// array of waypoint
+  /// declares an array of waypoint
   std::vector<geometry_msgs::PointStamped> waypoints;
                   
   // create a convenience typedef for a SimpleActionClient that will allow us to communicate with actions that adhere to the MoveBaseAction action interface
@@ -53,8 +53,7 @@ int main( int argc, char **argv )
       ROS_INFO("Waiting for the move_base action server to come up");
     }
     
-  // define each waypoint's coordinates (double)
-
+  // declare message type of 'point' which is used to define each waypoint's coordinates (double)
   geometry_msgs::PointStamped point;
 
   // Waypoint Nr. 0
@@ -101,7 +100,8 @@ int main( int argc, char **argv )
 
   for( int j=0; j<waypoints.size(); j++ )
   {
-    move_base_msgs::MoveBaseGoal goal;
+    // declare message type for goal
+    move_base_msgs::MoveBaseGoal goal; // evaluate use of the type MoveBaseActionGoal rather than MoveBaseGoal
     // use "robot_footprint" to send a goal relative to the robot actual pose and "map" to send an absolute goal
     goal.target_pose.header.frame_id = "map"; // or use "base_link"
     goal.target_pose.header.stamp= ros::Time::now();
@@ -120,7 +120,9 @@ int main( int argc, char **argv )
 
     ROS_INFO("Sending goal: (%.2f, %.2f, %.2f)", goal.target_pose.pose.position.x, goal.target_pose.pose.position.y, goal.target_pose.pose.orientation.z );
     action_client.sendGoal( goal );
-    action_client.waitForResult();
+    action_client.waitForResult(ros::Duration(60.0)); // 60 sec is the allocated timeout to continue with the next goal
+    // action_client.waitForResult(); // if the result message doesn't make it to the action client, then waitForResult() is going to block forever
+    
     if(action_client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
       ROS_INFO("Hooray, the base move to (%.2f, %.2f, %.2f)", goal.target_pose.pose.position.x, goal.target_pose.pose.position.y, goal.target_pose.pose.orientation.z );
     else
