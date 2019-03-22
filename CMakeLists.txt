@@ -201,5 +201,7 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-add_executable(waypoints src/waypoints.cpp)
-target_link_libraries(waypoints ${catkin_LIBRARIES})
+## 1. Declare a C++ executable, set a name for the generated executable file and the source file to be build
+add_executable(navi_goals src/waypoints.cpp)
+## 2. Set the linking library in the executable file
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} yaml-cpp)
