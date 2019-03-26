@@ -104,9 +104,9 @@ bool buildWaypointsFromFile(std::vector<geometry_msgs::PointStamped> &waypoints)
 }
 
 /*
-   Run waypoint navigation
+   Build Navigation Goal Message and send to MoveBase
 */
-void run(std::string ref_frame, const std::vector<geometry_msgs::PointStamped> &waypoints, int num_runs)
+void run(std::string ref_frame, move_base_msgs::MoveBaseGoal &goal, const std::vector<geometry_msgs::PointStamped> &waypoints, int index)
 {
   // tell the action client that we want to spin a thread by default
   MoveBaseClient action_client( "move_base", true );
@@ -116,23 +116,15 @@ void run(std::string ref_frame, const std::vector<geometry_msgs::PointStamped> &
   {
     ROS_INFO("Waiting for the move_base action server to come up");
   }
-  // send Navigation Goals to MoveBase
-  // loop according to number of runs
-  for ( int i = 0; i < num_runs; i++ )
-  {
-    for ( int j = 0; j < waypoints.size(); j++ )
-    {
-      // declare 'goal' to use it to keep each waipoints coordinates (double)
-      move_base_msgs::MoveBaseGoal goal;
-      // send a goal to the robot
+      // fill in the navigation goal message
       goal.target_pose.header.frame_id = ref_frame;
       goal.target_pose.header.stamp = ros::Time::now();
-      goal.target_pose.pose.position.x = waypoints[j].point.x;
-      goal.target_pose.pose.position.y = waypoints[j].point.y;
+      goal.target_pose.pose.position.x = waypoints[index].point.x;
+      goal.target_pose.pose.position.y = waypoints[index].point.y;
       goal.target_pose.pose.position.z = 0.0;
 
       // convert the degrees to quaternion
-      double yaw = waypoints[j].point.z * M_PI / 180.;
+      double yaw = waypoints[index].point.z * M_PI / 180.;
       tf2::Quaternion q;
       q.setRPY( 0., 0., yaw );
       goal.target_pose.pose.orientation.x = q.x();
@@ -140,16 +132,15 @@ void run(std::string ref_frame, const std::vector<geometry_msgs::PointStamped> &
       goal.target_pose.pose.orientation.z = q.z();
       goal.target_pose.pose.orientation.w = q.w();
 
+      // send navigation goal to MoveBase
       ROS_INFO("Sending goal: (%.2f, %.2f, %.2f)", goal.target_pose.pose.position.x, goal.target_pose.pose.position.y, goal.target_pose.pose.orientation.z );
       action_client.sendGoal( goal );
-      action_client.waitForResult(ros::Duration(120.0)); // waits 60 seconds to receive a result
+      action_client.waitForResult(ros::Duration(120.0)); // waits 120 seconds to receive a result
       if (action_client.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         ROS_INFO("The base reached its waypoint");
       else
         ROS_INFO("The base failed to reach its waypoint");
-      ros::Duration(0.5).sleep();
-    }
-  }
+      ros::Duration(0.5).sleep();  
 }
 
 /*
@@ -164,13 +155,9 @@ int main( int argc, char **argv )
   std::string ref_frame = "map"; // or use "base_link" for targets in the frame relative to the robots position
   // declare an array of PointStamped messages to keep track of the waypoints
   std::vector<geometry_msgs::PointStamped> waypoints;
-  // number of runs to repeat the waypoint navigation
-  int num_loops = 1;
-
-  #if __DEBUG__
-    ROS_INFO( "number of runs: %d", num_loops );
-  #endif
-
+  // declare 'goal' to use it to keep each waipoints coordinates (double)
+  move_base_msgs::MoveBaseGoal goal;
+  uint8_t task = 0;
   // parse waypoints from YAML file
   bool built = buildWaypointsFromFile(waypoints);
   if ( !built )
@@ -178,20 +165,32 @@ int main( int argc, char **argv )
     ROS_FATAL( "building waypoints from a file failed" );
     return 0;
   }
-  // run waypoint navigation
-  run(ref_frame, waypoints, num_loops);
 
-  // spin ROS
-  try
+ros::Rate rate(1); // in Hz, makes a best effort at maintaining a particular rate for a loop
+while(ros::ok())
   {
-    // ros takes all
-    ros::spin();
-  }
-  catch ( std::runtime_error& e )
-  {
-    ROS_ERROR( "ros spin failed: %s", e.what() );
-    return -1;
-  }
-
+ switch (task)
+    {
+    case 0:
+      ROS_INFO_ONCE("Moving to pick up place");
+      // funtion call to run waypoint navigation to waypoint 0
+      run(ref_frame, goal, waypoints, 0);
+      ROS_INFO_ONCE("Loading of goods ... (waiting 5 seconds)");
+      ros::Duration(5).sleep(); 
+      task = 1;
+      break;
+    
+    case 1:
+      ROS_INFO_ONCE("Moving to drop off zone");
+      // funtion call to run waypoint navigation to waypoint 1
+      run(ref_frame, goal, waypoints, 1);
+      task = 2;
+      break;
+    
+    case 2:
+      ROS_INFO_ONCE("Done!");
+      break;
+    }
+}
   return 0;
 }
