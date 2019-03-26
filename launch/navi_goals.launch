@@ -1,0 +1,5 @@
+<launch>
+   
+  <node pkg="navi_goals" type="navi_goals" name="navi_goals_node" output="screen" />
+  
+</launch>
