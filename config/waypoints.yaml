@@ -1,13 +1,10 @@
 waypoints:
   - point:
       x: 3.0
-      y: 4.0
-      th: -45 # in degree
+      y: 2.0
+      th: 0 # in degree
   - point:
       x: -3.0
-      y: 4.0
-      th: -135 # in degree
-  - point:
-      x: 3.0
-      y: 4.0
-      th: 90 # in degree
+      y: 2.0
+      th: 0 # in degree 
+  
