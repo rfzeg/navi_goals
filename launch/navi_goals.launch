@@ -1,5 +1,12 @@
+<?xml version="1.0"?>
 <launch>
    
   <node pkg="navi_goals" type="navi_goals" name="navi_goals_node" output="screen" />
+
+  <!-- By default, do not start RViz from this launch file -->
+  <arg name="rviz" default="false" />
+  <!-- Launch Rviz configured for navigation -->
+  <arg name="rvizconfig" default="$(find navi_goals)/rviz/navigation.rviz"/> <!-- Set config file --> 
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" if="$(arg use_rviz)" />
   
 </launch>

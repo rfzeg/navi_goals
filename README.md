@@ -11,7 +11,7 @@ ROS node that reads in a series of navigation waypoints from a YAML file and pub
 + **src/** : (required) contains source code, **waypoints.cpp**
 + **config/** : (required) contains YAML file that stores the position and orientation of waypoints
 + **launch/** : (optional) contains launch file for the executable file of this package
-
++ **rviz/** : (optional) contains Rviz configuration file to display navigation information
 
 ## YAML file structure
 
